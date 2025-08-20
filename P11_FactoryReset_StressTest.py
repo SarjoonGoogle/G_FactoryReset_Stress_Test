@@ -88,7 +88,7 @@ def wait_for_boot_and_oobe(serial, f):
     reboot_time = end_time - start_time
     completed_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     logging(f, f"Reboot + OOBE completed in {reboot_time:.2f} seconds at {completed_time}")
-    time.sleep(250)
+    time.sleep(80) #This sleep is added just to make sure device completely finishes whole process of booting before next Factory Reset cycle
 
     return reboot_time, completed_time
 
@@ -104,6 +104,7 @@ def capture_bugreport(serial, f, cycle):
 def run_reboot_stress(f, csv_writer):
     for cycle in range(1, REBOOT_TIMES + 1):
         logging(f, f"===== Cycle {cycle} START =====")
+        cycle_start_time = time.time()
 
         if not run_factory_reset(SERIAL_NUMBER, f):
             logging(f, f"Factory reset command failed at cycle {cycle}")
@@ -120,6 +121,9 @@ def run_reboot_stress(f, csv_writer):
         # Write to CSV
         csv_writer.writerow([SERIAL_NUMBER, cycle, f"{reboot_time:.2f}", completed_time, bugreport_flag])
 
+        cycle_end_time = time.time()
+        cycle_total_time = (cycle_end_time - cycle_start_time) / 60
+        logging(f, f"Cycle {cycle}'s Total Execution time is {cycle_total_time:.2f} minutes")
         logging(f, f"===== Cycle {cycle} COMPLETE =====\n")
         time.sleep(10)  # Optional delay before next cycle
 
