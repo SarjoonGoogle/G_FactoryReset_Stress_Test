@@ -9,6 +9,7 @@ from subprocess import run
 SERIAL_NUMBER = None
 REBOOT_TIMES = None
 FACTORY_RESET_COMMAND = 'am broadcast -a android.intent.action.FACTORY_RESET -n android/com.android.server.MasterClearReceiver'
+SKIP_OOBE =  'am broadcast -a com.google.android.clockwork.action.TEST_MODE'
 
 MAX_REBOOT_TIME_SEC = 900 # 15 minutes
 
@@ -89,6 +90,15 @@ def wait_for_boot_and_oobe(serial, f):
     completed_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     logging(f, f"Reboot + OOBE completed in {reboot_time:.2f} seconds at {completed_time}")
     time.sleep(80) #This sleep is added just to make sure device completely finishes whole process of booting before next Factory Reset cycle
+
+    # Run below command to skip OOBE and Get the watch ready for next iteration
+    logging(f, "SKIPPING OOBE, so starting TEST MODE")
+    result = run(['adb', '-s', serial, 'shell', SKIP_OOBE], capture_output=True, text=True)
+    if result.returncode != 0:
+        logging(f, f"Failed to start TEST MODE {result.stderr}")
+        return False
+
+    time.sleep(120) #This sleep is added just to make sure TEST MODE is done running and OOBE is skipped
 
     return reboot_time, completed_time
 
